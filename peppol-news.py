@@ -8,6 +8,43 @@ from bs4 import BeautifulSoup
 from slugify import slugify
 
 
+class PeppolNewsPreview(object):
+
+    def __init__(self, fragment):
+        self.__fragment = fragment
+
+    @property
+    def date(self):
+        pass
+
+    @property
+    def title(self):
+        return self.__fragment.findNext("div", { "class" : "entry-title" }).findNext("h1").text
+
+    @property
+    def contents(self):
+        pass
+
+    @property
+    def url(self):
+        fragment = self.__fragment.findNext("div", { "class" : "entry-title" })
+        return fragment.findNext("a", href=True)["href"]
+
+
+class PeppolNewsArchivePage(object):
+
+    def __init__(self, url):
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        self.__previews = []
+        for fragment in soup.findAll("article", { "class" : "post" }):
+            self.__previews.append(PeppolNewsPreview(fragment))
+
+    @property
+    def previews(self):
+        return self.__previews
+
+
 class PeppolNewsPost(object):
 
     def __init__(self, url):
@@ -62,9 +99,11 @@ class PeppolNewsPostJekyll(PeppolNewsPost):
 
 
 
-news = PeppolNewsPostJekyll('http://peppol.eu/2021-call-candidates-openpeppol-elections/')
+news = PeppolNewsArchivePage('http://peppol.eu/all-news/')
 
-with open(news.filename, 'w') as f:
-    f.write(news.header)
-    f.write(news.contents)
-
+for p in news.previews:
+    post = PeppolNewsPostJekyll(p.url)
+    print("fetching %s..." % p.title)
+    with open(post.filename, 'w') as f:
+        f.write(post.header)
+        f.write(post.contents)
