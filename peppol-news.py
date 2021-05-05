@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from slugify import slugify
 
 
-class PeppolNews(object):
+class PeppolNewsPost(object):
 
     def __init__(self, url):
         page = requests.get(url)
@@ -34,7 +34,7 @@ class PeppolNews(object):
         return self.__url
 
 
-class PeppolNewsJekyll(PeppolNews):
+class PeppolNewsPostJekyll(PeppolNewsPost):
     
     def __init__(self, url):
         super().__init__(url)
@@ -62,7 +62,7 @@ class PeppolNewsJekyll(PeppolNews):
 
 
 
-news = PeppolNewsJekyll('http://peppol.eu/2021-call-candidates-openpeppol-elections/')
+news = PeppolNewsPostJekyll('http://peppol.eu/2021-call-candidates-openpeppol-elections/')
 
 with open(news.filename, 'w') as f:
     f.write(news.header)
