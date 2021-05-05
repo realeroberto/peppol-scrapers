@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# script to scrape news from peppol.eu
+# fetches all news from peppol.eu and converts them to jekyll posts
+
 
 import requests
 from datetime import datetime
@@ -43,6 +44,32 @@ class PeppolNewsArchivePage(object):
     @property
     def previews(self):
         return self.__previews
+
+
+class PeppolNewsArchive(object):
+
+    def __init__(self):
+        self.__previews = []
+
+    def __iter__(self):
+        self.__i = 0
+        self.__j = 0
+        return self
+
+    def __next__(self):
+        try:
+            preview = self.__previews[self.__i]
+        except:
+            page = requests.get("http://peppol.eu/all-news/page/%d/" % self.__j)
+            if page.status_code == 404:
+                raise StopIteration
+            self.__j += 1
+            soup = BeautifulSoup(page.content, 'html.parser')
+            for fragment in soup.findAll("article", { "class" : "post" }):
+                self.__previews.append(PeppolNewsPreview(fragment))
+            preview = self.__previews[self.__i]
+        self.__i += 1
+        return preview
 
 
 class PeppolNewsPost(object):
@@ -99,11 +126,10 @@ class PeppolNewsPostJekyll(PeppolNewsPost):
 
 
 
-news = PeppolNewsArchivePage('http://peppol.eu/all-news/')
 
-for p in news.previews:
-    post = PeppolNewsPostJekyll(p.url)
-    print("fetching %s..." % p.title)
+for preview in PeppolNewsArchive():
+    post = PeppolNewsPostJekyll(preview.url)
+    print("fetching %s..." % preview.title)
     with open(post.filename, 'w') as f:
         f.write(post.header)
         f.write(post.contents)
