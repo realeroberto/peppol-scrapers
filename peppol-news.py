@@ -16,7 +16,9 @@ class PeppolNewsPreview(object):
 
     @property
     def date(self):
-        pass
+        fragment = self.__fragment.findNext("div", { "class" : "post-data-container" })
+        date = fragment.findNext("span", { "class" : "date" }).text.strip()
+        return datetime.strptime(date, "%b %d, %Y")
 
     @property
     def title(self):
@@ -48,7 +50,8 @@ class PeppolNewsArchivePage(object):
 
 class PeppolNewsArchive(object):
 
-    def __init__(self):
+    def __init__(self, startdate=None):
+        self.__startdate = startdate
         self.__previews = []
 
     def __iter__(self):
@@ -68,6 +71,8 @@ class PeppolNewsArchive(object):
             for fragment in soup.findAll("article", { "class" : "post" }):
                 self.__previews.append(PeppolNewsPreview(fragment))
             preview = self.__previews[self.__i]
+        if self.__startdate and preview.date < self.__startdate:
+            raise StopIteration
         self.__i += 1
         return preview
 
