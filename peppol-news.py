@@ -131,10 +131,38 @@ class PeppolNewsPostJekyll(PeppolNewsPost):
 
 
 
+import sys, getopt
 
-for preview in PeppolNewsArchive():
-    post = PeppolNewsPostJekyll(preview.url)
-    print("fetching %s..." % preview.title)
-    with open(post.filename, 'w') as f:
-        f.write(post.header)
-        f.write(post.contents)
+def help():
+    print('peppol-news.py -s <startdate>')
+
+def main(argv):
+    startdate = None
+
+    try:
+        opts, args = getopt.getopt(argv,"hs:",["startdate="])
+    except getopt.GetoptError:
+        help()
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            help()
+            sys.exit()
+        elif opt in ("-s", "--startdate"):
+            startdate = arg
+
+    if startdate:
+        startdate = datetime.fromtimestamp(int(startdate))
+
+    for preview in PeppolNewsArchive(startdate):
+        post = PeppolNewsPostJekyll(preview.url)
+        print("fetching %s..." % preview.title)
+        with open(post.filename, 'w') as f:
+            f.write(post.header)
+            f.write(post.contents)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+    sys.exit()
+
